@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pemilihan OSIS - Voting Online ARDINO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .candidate-card {
+            transition: all 0.3s ease;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+        
+        .candidate-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.2);
+        }
+        
+        .candidate-image {
+            height: 280px;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        
+        .candidate-card:hover .candidate-image {
+            transform: scale(1.05);
+        }
+        
+        .vote-btn {
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .vote-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .modal {
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .progress-bar {
+            transition: width 1s ease-in-out;
+        }
+        
+        .floating-btn {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #ff0;
+            opacity: 0;
+            pointer-events: none;
+            animation: confetti-fall 5s linear forwards;
+        }
+        
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen py-8 px-4">
+    <!-- Header Section -->
+    <header class="text-center mb-12">
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-3xl p-8 shadow-2xl mb-8">
+                <div class="flex items-center justify-center mb-6">
+                    <div class="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-4">
+                        <i class="fas fa-vote-yea text-white text-3xl"></i>
+                    </div>
+                    <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                        PEMILIHAN OSIS 2025
+                    </h1>
+                </div>
+                <p class="text-gray-600 text-lg mb-4">
+                    Suara Anda Menentukan Masa Depan Sekolah Kita
+                </p>
+                <div class="bg-gradient-to-r from-green-400 to-blue-500 text-white py-3 px-6 rounded-full inline-block">
+                    <i class="fas fa-users mr-2"></i>
+                    Total Pemilih: <span id="totalVoters">0</span> Siswa
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto">
+        <!-- Instructions -->
+        <div class="bg-white rounded-2xl p-6 mb-8 shadow-lg">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-info-circle text-blue-500 mr-3"></i>
+                Petunjuk Pemilihan
+            </h2>
+            <div class="grid md:grid-cols-3 gap-4">
+                <div class="text-center p-4 bg-blue-50 rounded-xl">
+                    <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-user-check text-white"></i>
+                    </div>
+                    <h3 class="font-semibold text-blue-700">Pilih Kandidat</h3>
+                    <p class="text-sm text-gray-600">Klik tombol "Pilih" pada kandidat pilihan Anda</p>
+                </div>
+                <div class="text-center p-4 bg-green-50 rounded-xl">
+                    <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-check-circle text-white"></i>
+                    </div>
+                    <h3 class="font-semibold text-green-700">Konfirmasi Pilihan</h3>
+                    <p class="text-sm text-gray-600">Konfirmasi pilihan Anda sebelum menyimpan</p>
+                </div>
+                <div class="text-center p-4 bg-purple-50 rounded-xl">
+                    <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-chart-bar text-white"></i>
+                    </div>
+                    <h3 class="font-semibold text-purple-700">Lihat Hasil</h3>
+                    <p class="text-sm text-gray-600">Pantau perkembangan hasil pemilihan secara real-time</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Candidates Grid -->
+        <h2 class="text-3xl font-bold text-white text-center mb-8">
+            <i class="fas fa-crown mr-3"></i>
+            Kandidat Ketua OSIS
+        </h2>
+        
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+            <!-- Candidate 1 -->
+            <div class="candidate-card bg-white">
+                <div class="relative overflow-hidden">
+                    <img 
+                        src="IMG_3854.JPG" 
+                        alt="Kandidat OSIS 1 - Siswa SMA berprestasi dengan senyum ramah memakai seragam sekolah lengkap, background perpustakaan sekolah dengan rak buku"
+                        class="candidate-image w-full"
+                        onerror="this.src='https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/e9ea7351-fd09-4108-b497-2a6e8b7dad9b.png'"
+                    >
+                    <div class="absolute top-4 right-4 bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                        No. 1
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">RISKI</h3>
+                    <p class="text-gray-600 mb-4">Kelas XE</p>
+                    <div class="bg-gray-100 p-4 rounded-lg mb-4">
+                        <h4 class="font-semibold text-blue-600 mb-2">Visi & Misi:</h4>
+                        <ul class="text-sm text-gray-700 space-y-1">
+                            <li>• Meningkatkan kualitas akademik siswa</li>
+                            <li>• Mengembangkan bakat non-akademik</li>
+                            <li>• Memperkuat solidaritas antar siswa</li>
+                            <li>• Digitalisasi sistem sekolah</li>
+                        </ul>
+                    </div>
+                    <button onclick="openModal(1)" class="vote-btn w-full bg-blue-500 hover:bg-blue-600 text-white py-3 px-6">
+                        <i class="fas fa-vote-yea mr-2"></i>
+                        Pilih Kandidat 1
+                    </button>
+                </div>
+            </div>
+
+            <!-- Candidate 2 -->
+            <div class="candidate-card bg-white">
+                <div class="relative overflow-hidden">
+                    <img 
+                        src="WhatsApp Image 2025-07-10 at 21.05.39.jpeg" 
+                        alt="Kandidat OSIS 2 - Siswi SMA aktif organisasi dengan penampilan percaya diri memakai seragam, background aula sekolah dengan panggung"
+                        class="candidate-image w-full"
+                        onerror="this.src='https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/979db891-6ebe-4ef8-9d7c-fa78de297782.png'"
+                    >
+                    <div class="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                        No. 2
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">BAYU</h3>
+                    <p class="text-gray-600 mb-4">Kelas XA </p>
+                    <div class="bg-gray-100 p-4 rounded-lg mb-4">
+                        <h4 class="font-semibold text-green-600 mb-2">Visi & Misi:</h4>
+                        <ul class="text-sm text-gray-700 space-y-1">
+                            <li>• Sekolah ramah lingkungan</li>
+                            <li>• Program beasiswa untuk berprestasi</li>
+                            <li>• Ekstrakurikuler inovatif</li>
+                            <li>• Kolaborasi dengan alumni</li>
+                        </ul>
+                    </div>
+                    <button onclick="openModal(2)" class="vote-btn w-full bg-green-500 hover:bg-green-600 text-white py-3 px-6">
+                        <i class="fas fa-vote-yea mr-2"></i>
+                        Pilih Kandidat 2
+                    </button>
+                </div>
+            </div>
+
+            <!-- Candidate 3 -->
+            <div class="candidate-card bg-white">
+                <div class="relative overflow-hidden">
+                    <img 
+                        src="IMG_3854.JPG" 
+                        alt="Kandidat OSIS 3 - Siswa SMA kreatif dengan ide-ide inovatif memakai seragam rapi, background laboratorium komputer sekolah"
+                        class="candidate-image w-full"
+                        onerror="this.src='https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/0a187cc3-14f0-4874-8bf2-c34fd58567cd.png'"
+                    >
+                    <div class="absolute top-4 right-4 bg-purple-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                        No. 3
+                    </div>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">ARDINO</h3>
+                    <p class="text-gray-600 mb-4">XIA</p>
+                    <div class="bg-gray-100 p-4 rounded-lg mb-4">
+                        <h4 class="font-semibold text-purple-600 mb-2">Visi & Misi:</h4>
+                        <ul class="text-sm text-gray-700 space-y-1">
+                            <li>• Teknologi dalam pembelajaran</li>
+                            <li>• Kewirausahaan siswa</li>
+                            <li>• International exchange program</li>
+                            <li>• Mental health awareness</li>
+                        </ul>
+                    </div>
+                    <button onclick="openModal(3)" class="vote-btn w-full bg-purple-500 hover:bg-purple-600 text-white py-3 px-6">
+                        <i class="fas fa-vote-yea mr-2"></i>
+                        Pilih Kandidat 3
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="bg-white rounded-2xl p-8 shadow-lg">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+                <i class="fas fa-chart-pie mr-3 text-blue-500"></i>
+                Hasil Sementara
+            </h2>
+            <div class="grid md:grid-cols-3 gap-6 mb-8">
+                <div class="text-center p-6 bg-blue-50 rounded-xl">
+                    <div class="text-3xl font-bold text-blue-600 mb-2" id="votes1">0</div>
+                    <div class="text-sm text-blue-800">Suara Kandidat 1</div>
+                    <div class="w-full bg-gray-200 rounded-full h-2 mt-3">
+                        <div class="progress-bar bg-blue-600 h-2 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="text-center p-6 bg-green-50 rounded-xl">
+                    <div class="text-3xl font-bold text-green-600 mb-2" id="votes2">0</div>
+                    <div class="text-sm text-green-800">Suara Kandidat 2</div>
+                    <div class="w-full bg-gray-200 rounded-full h-2 mt-3">
+                        <div class="progress-bar bg-green-600 h-2 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="text-center p-6 bg-purple-50 rounded-xl">
+                    <div class="text-3xl font-bold text-purple-600 mb-2" id="votes3">0</div>
+                    <div class="text-sm text-purple-800">Suara Kandidat 3</div>
+                    <div class="w-full bg-gray-200 rounded-full h-2 mt-3">
+                        <div class="progress-bar bg-purple-600 h-2 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center">
+                <button onclick="showResults()" class="floating-btn bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white py-3 px-8 rounded-full font-semibold">
+                    <i class="fas fa-sync-alt mr-2"></i>
+                    Perbarui Hasil
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center mt-12 text-white">
+        <div class="max-w-4xl mx-auto">
+            <p class="mb-4">© 2025 Sistem Pemilihan OSIS - SMA Negeri 1 Sukadana</p>
+            <div class="flex justify-center space-x-6">
+                <a href="#" class="hover:text-blue-200 transition-colors">
+                    <i class="fab fa-instagram text-2xl"></i>
+                </a>
+                <a href="#" class="hover:text-blue-200 transition-colors">
+                    <i class="fab fa-twitter text-2xl"></i>
+                </a>
+                <a href="#" class="hover:text-blue-200 transition-colors">
+                    <i class="fab fa-facebook text-2xl"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="modal bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-exclamation text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Konfirmasi Pilihan</h3>
+                <p class="text-gray-600 mb-6">Apakah Anda yakin memilih <span id="selectedCandidate" class="font-semibold">Kandidat 1</span>?</p>
+                <p class="text-sm text-red-500 mb-6">*Pilihan tidak dapat diubah setelah dikonfirmasi</p>
+                <div class="flex space-x-4">
+                    <button onclick="closeModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 px-6 rounded-lg font-semibold">
+                        Batal
+                    </button>
+                    <button onclick="submitVote()" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 px-6 rounded-lg font-semibold">
+                        Ya, Saya Yakin
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="modal bg-white rounded-2xl p-8 max-w-md w-full mx-4 text-center">
+            <div class="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-check text-white text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Suara Terkirim!</h3>
+            <p class="text-gray-600 mb-6">Terima kasih telah menggunakan hak pilih Anda dalam pemilihan OSIS 2025.</p>
+            <button onclick="closeSuccessModal()" class="bg-blue-500 hover:bg-blue-600 text-white py-3 px-8 rounded-lg font-semibold">
+                Tutup
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let selectedCandidate = 0;
+        let votes = {
+            1: 0,
+            2: 0,
+            3: 0
+        };
+        let totalVoters = 0;
+        let hasVoted = localStorage.getItem('hasVoted');
+
+        // Initialize from localStorage
+        function loadVotes() {
+            const savedVotes = localStorage.getItem('osisVotes');
+            const savedTotal = localStorage.getItem('totalVoters');
+            
+            if (savedVotes) {
+                votes = JSON.parse(savedVotes);
+            }
+            if (savedTotal) {
+                totalVoters = parseInt(savedTotal);
+            }
+            
+            updateResults();
+        }
+
+        function openModal(candidate) {
+            if (hasVoted) {
+                alert('Anda sudah menggunakan hak pilih!');
+                return;
+            }
+            
+            selectedCandidate = candidate;
+            document.getElementById('selectedCandidate').textContent = `Kandidat ${candidate}`;
+            document.getElementById('confirmationModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('confirmationModal').classList.add('hidden');
+        }
+
+        function submitVote() {
+            if (selectedCandidate > 0) {
+                votes[selectedCandidate]++;
+                totalVoters++;
+                
+                // Save to localStorage
+                localStorage.setItem('osisVotes', JSON.stringify(votes));
+                localStorage.setItem('totalVoters', totalVoters.toString());
+                localStorage.setItem('hasVoted', 'true');
+                hasVoted = true;
+                
+                closeModal();
+                updateResults();
+                createConfetti();
+                document.getElementById('successModal').classList.remove('hidden');
+            }
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('successModal').classList.add('hidden');
+        }
+
+        function updateResults() {
+            document.getElementById('votes1').textContent = votes[1];
+            document.getElementById('votes2').textContent = votes[2];
+            document.getElementById('votes3').textContent = votes[3];
+            document.getElementById('totalVoters').textContent = totalVoters;
+            
+            // Update progress bars
+            const totalVotes = votes[1] + votes[2] + votes[3];
+            if (totalVotes > 0) {
+                document.querySelectorAll('.progress-bar')[0].style.width = `${(votes[1] / totalVotes) * 100}%`;
+                document.querySelectorAll('.progress-bar')[1].style.width = `${(votes[2] / totalVotes) * 100}%`;
+                document.querySelectorAll('.progress-bar')[2].style.width = `${(votes[3] / totalVotes) * 100}%`;
+            }
+        }
+
+        function showResults() {
+            updateResults();
+            // Add a little animation to show refresh
+            document.querySelectorAll('.progress-bar').forEach(bar => {
+                bar.style.transition = 'width 0.5s ease-in-out';
+            });
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                document.body.appendChild(confetti);
+                
+                setTimeout(() => {
+                    confetti.remove();
+                }, 5000);
+            }
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadVotes();
+            
+            if (hasVoted) {
+                document.querySelectorAll('.vote-btn').forEach(btn => {
+                    btn.disabled = true;
+                    btn.classList.add('opacity-50', 'cursor-not-allowed');
+                    btn.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Sudah Memilih';
+                });
+            }
+        });
+    </script>
+</body>
+</html>
